@@ -7,7 +7,7 @@ from time import sleep
 # Change the piactl path if executing on Windows
 piapath = "piactl"
 if system() == 'Windows':
-    piapath = "C:\Program Files\Private Internet Access\piactl.exe"
+    piapath = "C:\Program Files\Private Internet Access"
 
 
 class PiaVpn:
@@ -20,28 +20,23 @@ class PiaVpn:
         get VPN servers available
         :return:
         """
-        cmd = [piapath, "get", "regions"]
+        cmd = ["cd", piapath, "&&", ".\\piactl", "get", "regions"]
         process = subprocess.run(
             cmd, shell=True, capture_output=True
         )
 
-        if process.returncode != 0:
-            raise SystemError(process.stderr.decode("utf-8"))
-        else:
-            regions = [e.strip('\r') for e in process.stdout.decode("utf-8").split("\n")]
-            regions.remove("auto")
-            regions.remove("")
+        regions = [e.strip('\r') for e in process.stdout.decode("utf-8").split("\n")]
+        regions.remove("auto")
+        regions.remove("")
 
-            return regions
+        return regions
 
     @staticmethod
     def region():
-        cmd = [piapath, "get", "region"]
+        cmd = ["cd", piapath, "&&", ".\\piactl", "get", "region"]
         process = subprocess.run(cmd, shell=True, capture_output=True)
-        if process.returncode != 0:
-            raise SystemError(process.stderr.decode("utf-8"))
-        else:
-            return process.stdout.decode("utf-8").replace("\n", "").strip('\r')
+        
+        return process.stdout.decode("utf-8").replace("\n", "").strip('\r')
 
     def set_region(self, server=None):
 
@@ -56,32 +51,24 @@ class PiaVpn:
         cmd = [piapath, "set", "region", server]
         process = subprocess.run(cmd, shell=True, capture_output=True)
 
-        if process.returncode != 0:
-            raise SystemError(process.stderr.decode("utf-8"))
-        else:
-            return server
+        return server
 
     @staticmethod
     def status():
-        cmd = [piapath, "get", "connectionstate"]
+        cmd = ["cd", piapath, "&&", ".\\piactl", "get", "connectionstate"]
+
         process = subprocess.run(
             cmd, shell=True, capture_output=True
         )
 
-        if process.returncode != 0:
-            raise SystemError(process.stderr.decode("utf-8"))
-        else:
-            return process.stdout.decode("utf-8").replace("\n", "").strip('\r')
+        return process.stdout.decode("utf-8").replace("\n", "").strip('\r')
 
     @staticmethod
     def ip():
-        cmd = [piapath, "get", "vpnip"]
+        cmd = ["cd", piapath, "&&", ".\\piactl", "get", "vpnip"]
         process = subprocess.run(cmd, shell=True, capture_output=True)
 
-        if process.returncode != 0:
-            raise SystemError(process.stderr.decode("utf-8"))
-        else:
-            return process.stdout.decode("utf-8").replace("\n", "").strip('\r')
+        return process.stdout.decode("utf-8").replace("\n", "").strip('\r')
 
     def connect(self, timeout=20, verbose=False):
         """
@@ -95,30 +82,28 @@ class PiaVpn:
                 'Args have some problems, check them. "timeout" must be integer and "verbose" must be boolean.'
             )
 
-        cmd = [piapath, "connect"]
+        cmd = ["cd", piapath, "&&", ".\\piactl", "connect"]
         process = subprocess.run(cmd, shell=True, capture_output=True)
-        if process.returncode != 0:
-            raise SystemError(process.stderr.decode("utf-8"))
-        else:
-            wait_animation = self._wait_iterator()
-            elapsed_time = 0.0
-            while self.status().lower() != "connected":
-                if int(elapsed_time) == timeout:
-                    self.disconnect()
-                    raise ConnectionError(
-                        "\nConnectionError: Unable to connect to server. Check your internet connection."
-                    )
-                if verbose:
-                    print("\rVPN connecting [{}]".format(next(wait_animation)), end="")
-                sleep_time = 0.2
-                sleep(sleep_time)
-                elapsed_time += sleep_time
-            region = self.region()
 
+        wait_animation = self._wait_iterator()
+        elapsed_time = 0.0
+        while self.status().lower() != "connected":
+            if int(elapsed_time) == timeout:
+                self.disconnect()
+                raise ConnectionError(
+                    "\nConnectionError: Unable to connect to server. Check your internet connection."
+                )
             if verbose:
-                print('\rVPN connected to: "{}"'.format(region))
+                print("\rVPN connecting [{}]".format(next(wait_animation)), end="")
+            sleep_time = 0.2
+            sleep(sleep_time)
+            elapsed_time += sleep_time
+        region = self.region()
 
-            return region
+        if verbose:
+            print('\rVPN connected to: "{}"'.format(region))
+
+        return region
 
     @staticmethod
     def _wait_iterator():
@@ -126,23 +111,17 @@ class PiaVpn:
 
     @staticmethod
     def disconnect():
-        cmd = [piapath, "disconnect"]
+        cmd = ["cd", piapath, "&&", ".\\piactl", "disconnect"]
         process = subprocess.run(cmd, shell=True, capture_output=True)
 
-        if process.returncode != 0:
-            raise SystemError(process.stderr.decode("utf-8"))
-        else:
-            return True
+        return True
 
     @staticmethod
     def reset_settings():
-        cmd = [piapath, "resetsettings"]
+        cmd = ["cd", piapath, "&&", ".\\piactl", "resetsettings"]
         process = subprocess.run(cmd, shell=True, capture_output=True)
 
-        if process.returncode != 0:
-            raise SystemError(process.stderr.decode("utf-8"))
-        else:
-            return True
+        return True
 
     @staticmethod
     def set_debug_logging(value=True):
@@ -150,10 +129,7 @@ class PiaVpn:
         if not isinstance(value, bool):
             raise SystemError('Arg "value" must be a boolean.')
 
-        cmd = [piapath, "set", "debuglogging", str(value).lower()]
+        cmd = ["cd", piapath, "&&", ".\\piactl", "set", "debuglogging", str(value).lower()]
         process = subprocess.run(cmd, shell=True, capture_output=True)
 
-        if process.returncode != 0:
-            raise SystemError(process.stderr.decode("utf-8"))
-        else:
-            return True
+        return True
